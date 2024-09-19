@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WebSocket Test</title>
+    <script src="https://cdn.socket.io/4.3.2/socket.io.min.js"></script>
+  </head>
+  <body>
+    <h1>WebSocket Test</h1>
+    <div>
+      <h2>Status Updates</h2>
+      <ul id="statusList"></ul>
+    </div>
+
+    <script>
+      // Connect to the WebSocket server
+      const socket = io('http://localhost:4200') // Adjust the URL as needed
+
+      // Handle incoming messages
+      socket.on('taskStatusUpdated', (data) => {
+        console.log('Received task status update:', data)
+
+        // Append the status update to the list
+        const statusList = document.getElementById('statusList')
+        const listItem = document.createElement('li')
+        listItem.textContent = `Task ID: ${data.taskId}, Status: ${data.status}`
+        statusList.appendChild(listItem)
+      })
+
+      // Optional: Log connection status
+      socket.on('connect', () => {
+        console.log('Connected to WebSocket server')
+      })
+
+      socket.on('disconnect', () => {
+        console.log('Disconnected from WebSocket server')
+      })
+    </script>
+  </body>
+</html>
