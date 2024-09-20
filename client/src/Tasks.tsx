@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import './Tasks.css'; // Assuming you have a separate CSS file
+import './Tasks.css'; 
 import { SocketIO_Client } from './socket';
 
 // Define the Task interface
@@ -9,34 +9,43 @@ interface Task {
   title: string;
   description: string;
   status: string;
-  dueDate: string; // Adjust if necessary based on your backend response
+  dueDate: string; 
 }
 
+// Status options
+const statusOptions = [
+  { value: 'pending', label: 'Pending' },
+  { value: 'in-progress', label: 'In Progress' },
+  { value: 'completed', label: 'Completed' },
+];
+
 const Tasks: React.FC = () => {
-  const [tasks, setTasks] = useState<Task[]>([]); // Specify Task type
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [status, setStatus] = useState('');
+  const [status, setStatus] = useState(''); 
   const [dueDate, setDueDate] = useState('');
   const [editingTaskId, setEditingTaskId] = useState<number | null>(null);
   const socketClient = SocketIO_Client.getInstance();
+
   useEffect(() => {
     socketClient.connect('http://localhost:4200');
-
     fetchTasks();
   }, []);
-  socketClient.on('taskStatusUpdated', (data:any) => {
+
+  socketClient.on('taskStatusUpdated', (data: any) => {
     console.log('Received data:', data);
-    fetchTasks()
-});
+    fetchTasks();
+  });
+
   const fetchTasks = async () => {
     try {
-      const Token = localStorage.getItem('Token')
-      const response = await axios.get<Task[]>('http://localhost:4200/tasks',{
+      const Token = localStorage.getItem('Token');
+      const response = await axios.get<Task[]>('http://localhost:4200/tasks', {
         headers: {
           'Authorization': `Bearer ${Token}`
         }
-      }); // Specify Task type
+      });
       setTasks(response.data);
     } catch (error) {
       console.error('Failed to fetch tasks', error);
@@ -44,22 +53,19 @@ const Tasks: React.FC = () => {
   };
 
   const handleAddOrUpdateTask = async (event: React.FormEvent) => {
-    const Token = localStorage.getItem('Token')
-
+    const Token = localStorage.getItem('Token');
     event.preventDefault();
     const taskData = { title, description, status, dueDate };
 
     if (editingTaskId) {
-      // Update task
-      await axios.put(`http://localhost:4200/tasks/${editingTaskId}`, taskData,{
-         headers: {
+      await axios.put(`http://localhost:4200/tasks/${editingTaskId}`, taskData, {
+        headers: {
           'Authorization': `Bearer ${Token}`
         }
       });
     } else {
-      // Create new task
-      await axios.post('http://localhost:4200/tasks', taskData,{
-         headers: {
+      await axios.post('http://localhost:4200/tasks', taskData, {
+        headers: {
           'Authorization': `Bearer ${Token}`
         }
       });
@@ -78,8 +84,23 @@ const Tasks: React.FC = () => {
   };
 
   const handleDelete = async (id: number) => {
-    await axios.delete(`http://localhost:4200/tasks/${id}`);
-    fetchTasks();
+    try {
+      const Token = localStorage.getItem('Token');
+      if (!Token) {
+        console.error('No token found. Please log in again.');
+        return;
+      }
+
+      await axios.delete(`http://localhost:4200/tasks/${id}`, {
+        headers: {
+          Authorization: `Bearer ${Token}`,
+        },
+      });
+
+      fetchTasks();
+    } catch (error: any) {
+      console.error('Error deleting task:', error.response ? error.response.data : error.message);
+    }
   };
 
   const resetForm = () => {
@@ -107,13 +128,18 @@ const Tasks: React.FC = () => {
           onChange={(e) => setDescription(e.target.value)}
           required
         />
-        <input
-          type="text"
-          placeholder="Status"
+        <select
           value={status}
           onChange={(e) => setStatus(e.target.value)}
           required
-        />
+        >
+          <option value="" disabled>Select Status</option>
+          {statusOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
         <input
           type="date"
           value={dueDate}
