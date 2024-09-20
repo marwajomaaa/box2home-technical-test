@@ -1,0 +1,18 @@
+version: '3.8'
+services:
+       react-app:
+              build:
+                     context: .
+                     dockerfile: Dockerfile
+              ports:
+                     - '3000:80'
+              environment:
+                     REACT_APP_API_URL: http://server:4200
+
+              networks:
+                     - shared-network
+              restart: always
+
+networks:
+       shared-network:
+              external: true
